@@ -3,6 +3,7 @@ out/
 
 # Local source checkout
 kernel_source/
+AnyKernel3/
 
 # Toolchains
 toolchains/

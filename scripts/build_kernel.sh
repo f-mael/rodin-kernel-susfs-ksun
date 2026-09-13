@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # ---- user-tunable defaults ----
-DEFCONFIG="rodin_defconfig"
-JOBS="$(nproc --all)"
+DEFCONFIG="${DEFCONFIG:-rodin_defconfig}"
+JOBS="${JOBS:-$(nproc --all)}"
 
 # ---- paths ----
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_DIR="$ROOT_DIR/kernel_source"
-OUT_DIR="$ROOT_DIR/out"
-ARTIFACTS_DIR="$ROOT_DIR/artifacts"
+SRC_DIR="${SRC_DIR:-$ROOT_DIR/kernel_source}"
+OUT_DIR="${OUT_DIR:-$ROOT_DIR/out}"
+ARTIFACTS_DIR="${ARTIFACTS_DIR:-$ROOT_DIR/artifacts}"
 LOG_FILE="$ARTIFACTS_DIR/build-$(date +%Y%m%d-%H%M%S).log"
 
 # ---- env ----
@@ -58,6 +58,7 @@ done
 if [[ "$FOUND" -eq 0 ]]; then
   echo "[!] Build completed, but no known kernel image found. Check $LOG_FILE"
 else
+  ls -lah "$ARTIFACTS_DIR" > "$ARTIFACTS_DIR/artifacts-manifest.txt"
   echo "[+] Artifacts copied to: $ARTIFACTS_DIR"
 fi
 

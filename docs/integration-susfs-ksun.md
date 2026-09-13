@@ -43,4 +43,10 @@ From repository root:
 
 ## 5) Packaging
 
-Use your preferred AnyKernel3/vendor workflow and place outputs in `artifacts/`.
+Clone or prepare AnyKernel3 in `AnyKernel3/`, then package:
+
+```bash
+./scripts/package_anykernel3.sh --anykernel-dir ./AnyKernel3
+```
+
+Generated ZIP goes to `artifacts/`.
