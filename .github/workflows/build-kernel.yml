@@ -6,7 +6,7 @@ on:
       kernel_repo:
         description: "Kernel source repository URL"
         required: true
-        default: "https://android.googlesource.com/kernel/common"
+        default: "https://github.com/WildKernels/GKI_KernelSU_SUSFS"
         type: string
       kernel_branch:
         description: "Kernel source branch or tag"
@@ -76,9 +76,6 @@ jobs:
             --branch "$KERNEL_BRANCH" \
             -- "$KERNEL_REPO" \
             kernel_source
-
-      - name: Integrate KernelSU-Next and SUSFS
-        run: ./scripts/apply_patches.sh
 
       - name: Build kernel
         env:
