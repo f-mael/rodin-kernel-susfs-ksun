@@ -28,6 +28,19 @@ Kernel build environment for **Poco X7 Pro (rodin)** with **SUSFS** and **KSU Ne
    ```bash
    ./scripts/build_kernel.sh
    ```
+6. Optional AnyKernel3 ZIP packaging:
+   ```bash
+   ./scripts/package_anykernel3.sh --anykernel-dir ./AnyKernel3
+   ```
+
+## GitHub Actions
+
+- Workflow: `.github/workflows/build-kernel.yml`
+- Trigger manually with **Run workflow** and provide:
+  - `kernel_repo`
+  - `kernel_branch`
+  - `defconfig`
+  - optional `anykernel_repo` / `anykernel_branch`
 
 ## Expected host (recommended)
 

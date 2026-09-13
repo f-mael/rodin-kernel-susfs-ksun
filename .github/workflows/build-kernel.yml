@@ -1,0 +1,88 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_repo:
+        description: "Kernel source repository URL"
+        required: true
+        type: string
+      kernel_branch:
+        description: "Kernel source branch"
+        required: true
+        default: "main"
+        type: string
+      defconfig:
+        description: "Kernel defconfig"
+        required: true
+        default: "rodin_defconfig"
+        type: string
+      anykernel_repo:
+        description: "Optional AnyKernel3 repository URL"
+        required: false
+        default: ""
+        type: string
+      anykernel_branch:
+        description: "AnyKernel3 branch"
+        required: false
+        default: "master"
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Checkout build scaffold
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git curl wget unzip rsync zip \
+            build-essential bc bison flex \
+            libssl-dev libelf-dev dwarves \
+            ccache python3 python3-pip \
+            clang lld llvm
+
+      - name: Prepare scripts
+        run: ./scripts/fix_permissions.sh
+
+      - name: Fetch kernel source
+        run: |
+          rm -rf kernel_source
+          git clone --depth 1 \
+            --branch "${{ inputs.kernel_branch }}" \
+            "${{ inputs.kernel_repo }}" \
+            kernel_source
+
+      - name: Build kernel
+        env:
+          DEFCONFIG: ${{ inputs.defconfig }}
+          KBUILD_BUILD_USER: github-actions
+          KBUILD_BUILD_HOST: ubuntu-latest
+        run: ./scripts/build_kernel.sh
+
+      - name: Fetch AnyKernel3
+        if: ${{ inputs.anykernel_repo != '' }}
+        run: |
+          rm -rf AnyKernel3
+          git clone --depth 1 \
+            --branch "${{ inputs.anykernel_branch }}" \
+            "${{ inputs.anykernel_repo }}" \
+            AnyKernel3
+
+      - name: Package AnyKernel3 zip
+        if: ${{ inputs.anykernel_repo != '' }}
+        run: ./scripts/package_anykernel3.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-artifacts-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: error
