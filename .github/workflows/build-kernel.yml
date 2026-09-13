@@ -6,21 +6,22 @@ on:
       kernel_repo:
         description: "Kernel source repository URL"
         required: true
+        default: "https://android.googlesource.com/kernel/common"
         type: string
       kernel_branch:
-        description: "Kernel source branch"
+        description: "Kernel source branch or tag"
         required: true
-        default: "main"
+        default: "android15-6.6"
         type: string
       defconfig:
         description: "Kernel defconfig"
         required: true
-        default: "rodin_defconfig"
+        default: "gki_defconfig"
         type: string
       anykernel_repo:
-        description: "Optional AnyKernel3 repository URL"
+        description: "AnyKernel3 repository URL"
         required: false
-        default: ""
+        default: "https://github.com/KernelSU-Next/AnyKernel3"
         type: string
       anykernel_branch:
         description: "AnyKernel3 branch"
@@ -52,13 +53,32 @@ jobs:
       - name: Prepare scripts
         run: ./scripts/fix_permissions.sh
 
-      - name: Fetch kernel source
+      - name: Fetch kernel source safely
+        env:
+          KERNEL_REPO: ${{ inputs.kernel_repo }}
+          KERNEL_BRANCH: ${{ inputs.kernel_branch }}
         run: |
+          if [[ ! "$KERNEL_REPO" =~ ^https:// ]]; then
+            echo "[-] kernel_repo must start with https://"
+            exit 1
+          fi
+          if [[ "$KERNEL_BRANCH" =~ [[:space:]] || "$KERNEL_BRANCH" == -* ]]; then
+            echo "[-] kernel_branch cannot contain whitespace or start with '-'"
+            exit 1
+          fi
+          git ls-remote --exit-code "$KERNEL_REPO" "$KERNEL_BRANCH" >/dev/null 2>&1 || \
+            git ls-remote --exit-code "$KERNEL_REPO" "refs/tags/$KERNEL_BRANCH" >/dev/null 2>&1 || {
+              echo "[-] Branch/tag '$KERNEL_BRANCH' not found in $KERNEL_REPO"
+              exit 1
+            }
           rm -rf kernel_source
           git clone --depth 1 \
-            --branch "${{ inputs.kernel_branch }}" \
-            "${{ inputs.kernel_repo }}" \
+            --branch "$KERNEL_BRANCH" \
+            -- "$KERNEL_REPO" \
             kernel_source
+
+      - name: Integrate KernelSU-Next and SUSFS
+        run: ./scripts/apply_patches.sh
 
       - name: Build kernel
         env:
@@ -69,11 +89,27 @@ jobs:
 
       - name: Fetch AnyKernel3
         if: ${{ inputs.anykernel_repo != '' }}
+        env:
+          ANYKERNEL_REPO: ${{ inputs.anykernel_repo }}
+          ANYKERNEL_BRANCH: ${{ inputs.anykernel_branch }}
         run: |
+          if [[ ! "$ANYKERNEL_REPO" =~ ^https:// ]]; then
+            echo "[-] anykernel_repo must start with https://"
+            exit 1
+          fi
+          if [[ "$ANYKERNEL_BRANCH" =~ [[:space:]] || "$ANYKERNEL_BRANCH" == -* ]]; then
+            echo "[-] anykernel_branch cannot contain whitespace or start with '-'"
+            exit 1
+          fi
+          git ls-remote --exit-code "$ANYKERNEL_REPO" "$ANYKERNEL_BRANCH" >/dev/null 2>&1 || \
+            git ls-remote --exit-code "$ANYKERNEL_REPO" "refs/tags/$ANYKERNEL_BRANCH" >/dev/null 2>&1 || {
+              echo "[-] Branch/tag '$ANYKERNEL_BRANCH' not found in $ANYKERNEL_REPO"
+              exit 1
+            }
           rm -rf AnyKernel3
           git clone --depth 1 \
-            --branch "${{ inputs.anykernel_branch }}" \
-            "${{ inputs.anykernel_repo }}" \
+            --branch "$ANYKERNEL_BRANCH" \
+            -- "$ANYKERNEL_REPO" \
             AnyKernel3
 
       - name: Package AnyKernel3 zip
