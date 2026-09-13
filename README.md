@@ -4,7 +4,7 @@ Kernel build environment for **Poco X7 Pro (rodin)** with **SUSFS** and **KSU Ne
 
 > ⚠️ **Important**
 > - This repository provides a **clean and reproducible build scaffold**.
-> - You must use the **correct kernel source for rodin**, and ensure compatibility for SUSFS/KSU Next patches with your target kernel version.
+> - You must use for rodin**, and ensure compatibility for SUSFS/KSU Next patches with your target kernel version.
 > - Use this only on devices you own and for legitimate development/research.
 
 ## Contents
